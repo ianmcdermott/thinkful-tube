@@ -84,14 +84,14 @@ form{
 .js-more-results{
 	clear: both;
 	width: 100%;
-	display: none;
-
+	text-align: center;
+	display: block;
 }
 
-.js-more-results-btn{
+.js-prev-results-btn, .js-more-results-btn{
 	margin-top: 15px;
 	margin: 0 auto;
-	display: block;
+	display: none;
 }
 
 button{

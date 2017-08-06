@@ -1,5 +1,12 @@
+// 	====================================== * * * * * * VARIABLES * * * * * * ====================================== //
+
 const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 let userSearch = "";
+let moreResultCount = 0;
+let prevPage;
+let nextPage;
+
+// 	====================================== * * * * * * API FUNCTIONS * * * * * * ====================================== //
 
 function getDataFromAPI(searchTerm, callback){
 	userSearch = searchTerm;
@@ -8,15 +15,12 @@ function getDataFromAPI(searchTerm, callback){
 		maxResults: 10,
 		key: "AIzaSyCOQcmcGEmE5hwqB4Z1Pv8OXTsOE9yK06M",
 		part: 'snippet',
+		pageToken: null
 	}
-	//Somehow pass the query (search term) into the callback (displayYoutubeSearchData)
-
 	$.getJSON(YOUTUBE_SEARCH_URL, query, callback);
-	
 }
 
-function getNextPageFromAPI(callback, nextPage){
-
+function getNextPageFromAPI(callback){
 	const query = {	
 		q: userSearch,
 		maxResults: 10,
@@ -24,15 +28,25 @@ function getNextPageFromAPI(callback, nextPage){
 		part: 'snippet',
 		pageToken: nextPage
 	}
-	console.log(nextPage);
-	//put endpoint+query combo into displayYoutubeSearchData func
 	$.getJSON(YOUTUBE_SEARCH_URL, query, callback);
 }
 
+function getPrevPageFromAPI(callback){
 
-//renders search data to 
+	const query = {	
+		q: userSearch,
+		maxResults: 10,
+		key: "AIzaSyCOQcmcGEmE5hwqB4Z1Pv8OXTsOE9yK06M",
+		part: 'snippet',
+		pageToken: prevPage
+	}
+	$.getJSON(YOUTUBE_SEARCH_URL, query, callback);
+}
+
+// 	====================================== * * * * * * RENDER FUNCTIONS * * * * * * ====================================== //
+
+//renders search data to viewport
 function renderResult(result){
-
 	let linkId = "";
 	
 	//some results are channels, not videos so we make a variable that'll handle it if that's the case 
@@ -41,6 +55,8 @@ function renderResult(result){
 	} else if (result.id.kind === "youtube#channel"){
 		linkId = `https://www.youtube.com/channel/${result.id.channelId}`;
 	}
+
+	// Render the HTML with thumbnail, link to more videos from user, and video popping up as iframe in a featherlight lightbox 
 	return `
 		<div class="search-results">
 			<a href="https://www.youtube.com/embed/${result.id.videoId}" data-featherlight="iframe" data-featherlight-iframe-allowfullscreen="true" data-featherlight-iframe-width="750" data-featherlight-iframe-height="422"><img src="${result.snippet.thumbnails.medium.url}" alt="Image for ${result.snippet.title}"/></a>
@@ -54,57 +70,70 @@ function renderResult(result){
 			</div>
 		</div>
 	`;
-
 }
 
 //puts each result through the render function
 function displayYoutubeSearchData(data){
-	console.log("Data is: " + data);
 	const results = data.items.map((item, index) => renderResult(item));
-	console.log("next page is: " + data.nextPageToken)
-	$(watchMoreResults(data))
-	//const nextPageToken = data.items.map((item, index) => item.nextPageToken);
-	$(".js-search-results").html(results);
-	$(".js-more-results").css({"display": "block"});
+	$(renderNavButtons(results, data));
+	console.log(moreResultCount);
+
+	nextPage = data.nextPageToken;
+	prevPage = data.prevPageToken;
 }
 
+//Updates the header with User Search input
+function updateSearchTitle(searchVal){
+	$(".js-result-title").text(`Results for ${searchVal}`);	
+}
 
-//listens for submit event
+//Renders Watch More/Prev buttons to webpage
+function renderNavButtons(results, data){
+	$(".js-search-results").html(results);
+	$(".js-more-results-btn").css({"display": "inline"});
+	if(moreResultCount > 0){
+		$(".js-prev-results-btn").css({"display": "inline"});
+	} else {
+		$(".js-prev-results-btn").css({"display": "none"});
+	};
+}
+
+// 	====================================== * * * * * * EVENT HANDLERS * * * * * * ====================================== //
+
+//listens for submit click
 function watchSubmit(){
 	$(".js-search-form").submit(event => {
 		const queryTarget = $(event.currentTarget).find('.js-query');
     	const query = queryTarget.val();
 		queryTarget.val("");
-		//User's input is the query we send to our getData function, displayYoutubeSearchData is the callback function to be used with the input
+		//User's input is the query we send to our getDataFromAPI function, displayYoutubeSearchData is the callback function to be used with the input
 		getDataFromAPI(query, displayYoutubeSearchData);
 		updateSearchTitle(query);
 	})
 }
 
-//listens for submit event
-function watchMoreResults(data){
-
+//listens for "Show More Results" button click
+function watchMoreResults(){
 	$(".js-more-results").on("click", ".js-more-results-btn", event=> {
-	//	$({result.nextPageToken});
-	console.log("data q is " + data.nextPageToken);
-	getNextPageFromAPI(displayYoutubeSearchData, data.nextPageToken);
-	// Take the current next page token, and use it to get a new object of the next results
+		event.stopPropagation();
+		moreResultCount++;
+		getNextPageFromAPI(displayYoutubeSearchData);
 	});
-	
 }
 
-function updateSearchTitle(searchVal){
-	console.log(`Results for ${searchVal}`);
-	$(".js-result-title").text(`Results for ${searchVal}`);	
+//listens for "Show Prev Results" button click
+function watchPrevResults(){
+	$(".js-more-results").on("click", ".js-prev-results-btn", event=> {
+		event.stopPropagation();
+		moreResultCount--;
+		getPrevPageFromAPI(displayYoutubeSearchData);	
+	});
 }
 
-$(watchSubmit);
+function handleApp(){
+	$(watchSubmit);
+	$(watchMoreResults);
+	$(watchPrevResults);
+}
 
-
-
-/*	
-    Make the images clickable, leading the user to the YouTube video, on YouTube
-    Make the images clickable, playing them in a lightbox
-    Show a link for more from the channel that each video came from
-    Show buttons to get more results (using the previous and next page links from the JSON)
-*/
+$(handleApp);
