@@ -5,42 +5,27 @@ let userSearch = "";
 let moreResultCount = 0;
 let prevPage;
 let nextPage;
+let nextPageClicked = false;
+let prevPageClicked = false;
 
 // 	====================================== * * * * * * API FUNCTIONS * * * * * * ====================================== //
 
-function getDataFromAPI(searchTerm, callback){
-	userSearch = searchTerm;
-	const query = {	
-		q: `${searchTerm}`,
-		maxResults: 10,
-		key: "AIzaSyCOQcmcGEmE5hwqB4Z1Pv8OXTsOE9yK06M",
-		part: 'snippet',
-		pageToken: null
-	}
-	$.getJSON(YOUTUBE_SEARCH_URL, query, callback);
-}
-
-function getNextPageFromAPI(callback){
-	const query = {	
-		q: userSearch,
-		maxResults: 10,
-		key: "AIzaSyCOQcmcGEmE5hwqB4Z1Pv8OXTsOE9yK06M",
-		part: 'snippet',
-		pageToken: nextPage
-	}
-	$.getJSON(YOUTUBE_SEARCH_URL, query, callback);
-}
-
-function getPrevPageFromAPI(callback){
+function getDataFromAPI(callback){
+	let pageTokenState;
+	if(nextPageClicked) pageTokenState = nextPage;
+	else if(prevPageClicked) pageTokenState = prevPage;
+	else pageTokenState = null;
 
 	const query = {	
 		q: userSearch,
 		maxResults: 10,
 		key: "AIzaSyCOQcmcGEmE5hwqB4Z1Pv8OXTsOE9yK06M",
 		part: 'snippet',
-		pageToken: prevPage
+		pageToken: pageTokenState
 	}
 	$.getJSON(YOUTUBE_SEARCH_URL, query, callback);
+	nextPageClicked = false;
+	prevPageClicked = false;
 }
 
 // 	====================================== * * * * * * RENDER FUNCTIONS * * * * * * ====================================== //
@@ -76,13 +61,12 @@ function renderResult(result){
 function displayYoutubeSearchData(data){
 	const results = data.items.map((item, index) => renderResult(item));
 	$(renderNavButtons(results, data));
-	console.log(moreResultCount);
-
+	//Update Prev/Next Page variables to be added in Ajax query
 	nextPage = data.nextPageToken;
 	prevPage = data.prevPageToken;
 }
 
-//Updates the header with User Search input
+//Updates the header with user search input
 function updateSearchTitle(searchVal){
 	$(".js-result-title").text(`Results for ${searchVal}`);	
 }
@@ -104,11 +88,11 @@ function renderNavButtons(results, data){
 function watchSubmit(){
 	$(".js-search-form").submit(event => {
 		const queryTarget = $(event.currentTarget).find('.js-query');
-    	const query = queryTarget.val();
+    	userSearch = queryTarget.val();
 		queryTarget.val("");
 		//User's input is the query we send to our getDataFromAPI function, displayYoutubeSearchData is the callback function to be used with the input
-		getDataFromAPI(query, displayYoutubeSearchData);
-		updateSearchTitle(query);
+		getDataFromAPI(displayYoutubeSearchData);
+		updateSearchTitle(userSearch);
 	})
 }
 
@@ -117,7 +101,8 @@ function watchMoreResults(){
 	$(".js-more-results").on("click", ".js-more-results-btn", event=> {
 		event.stopPropagation();
 		moreResultCount++;
-		getNextPageFromAPI(displayYoutubeSearchData);
+		nextPageClicked = true;
+		getDataFromAPI(displayYoutubeSearchData);
 	});
 }
 
@@ -126,14 +111,15 @@ function watchPrevResults(){
 	$(".js-more-results").on("click", ".js-prev-results-btn", event=> {
 		event.stopPropagation();
 		moreResultCount--;
-		getPrevPageFromAPI(displayYoutubeSearchData);	
+		prevPageClicked = true;
+		getDataFromAPI(displayYoutubeSearchData);	
 	});
 }
 
-function handleApp(){
+function runApp(){
 	$(watchSubmit);
 	$(watchMoreResults);
 	$(watchPrevResults);
 }
 
-$(handleApp);
+$(runApp);
