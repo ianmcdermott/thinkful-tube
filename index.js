@@ -7,6 +7,7 @@ let prevPage;
 let nextPage;
 let nextPageClicked = false;
 let prevPageClicked = false;
+let resultNumber = 10;
 
 // 	====================================== * * * * * * API FUNCTIONS * * * * * * ====================================== //
 
@@ -18,7 +19,7 @@ function getDataFromAPI(callback){
 
 	const query = {	
 		q: userSearch,
-		maxResults: 10,
+		maxResults: resultNumber,
 		key: "AIzaSyCOQcmcGEmE5hwqB4Z1Pv8OXTsOE9yK06M",
 		part: 'snippet',
 		pageToken: pageTokenState
@@ -44,10 +45,10 @@ function renderResult(result){
 	// Render the HTML with thumbnail, link to more videos from user, and video popping up as iframe in a featherlight lightbox 
 	return `
 		<div class="search-results">
-			<a href="https://www.youtube.com/embed/${result.id.videoId}" data-featherlight="iframe" data-featherlight-iframe-allowfullscreen="true" data-featherlight-iframe-width="750" data-featherlight-iframe-height="422" role="application"><img src="${result.snippet.thumbnails.medium.url}" alt="Image for ${result.snippet.title}. Click to open lightbox."/></a>
+			<a href="https://www.youtube.com/embed/${result.id.videoId}" data-featherlight="iframe" data-featherlight-iframe-allowfullscreen="true" data-featherlight-iframe-width="750" data-featherlight-iframe-height="422"><img src="${result.snippet.thumbnails.medium.url}" alt="Image for ${result.snippet.title}. Click to open lightbox."/></a>
 			<div class="image-description">
 				<h2>
-					<a href="https://www.youtube.com/embed/${result.id.videoId}" data-featherlight="iframe" data-featherlight-iframe-allowfullscreen="true" data-featherlight-iframe-width="750" data-featherlight-iframe-height="422" role="application">Click to open lightbox for ${result.snippet.title}</a>
+					<a href="https://www.youtube.com/embed/${result.id.videoId}" data-featherlight="iframe" data-featherlight-iframe-allowfullscreen="true" data-featherlight-iframe-width="750" data-featherlight-iframe-height="422"><span class="visuallyhidden">Click to open lightbox for </span>${result.snippet.title}</a>
 				</h2>
 				
 				<a class="js-more-video" href="https://www.youtube.com/channel/${result.snippet.channelId}" target="blank">More from ${result.snippet.channelTitle}</a>
@@ -64,27 +65,28 @@ function displayYoutubeSearchData(data){
 	//Update Prev/Next Page variables to be added in Ajax query
 	nextPage = data.nextPageToken;
 	prevPage = data.prevPageToken;
+	updateSearchTitle(userSearch, data.pageInfo.totalResults);
+
 }
 
 //Updates the header with user search input
-function updateSearchTitle(searchVal){
-	$(".js-result-title").text(`Results for ${searchVal}`);	
+function updateSearchTitle(searchVal, numItems){
+	$(".js-result-title").text(`Showing ${numItems} results for ${searchVal}`);	
 }
 
 //Renders Watch More/Prev buttons to webpage
 function renderNavButtons(results, data){
-	$(".js-search-results").html(results);
-	$(".js-more-results-btn")
-		.css({"display": "inline"})
+	$(".js-search-results")
+		.html(results)
 		.prop("hidden", false);
+
+	$(".js-more-results-btn").css({"display": "inline"});
+		
 	if(moreResultCount > 0){
-		$(".js-prev-results-btn")
-			.css({"display": "inline"})
-			.prop("hidden", false);
+		$(".js-prev-results-btn").css({"display": "inline"});
+			
 	} else {
-		$(".js-prev-results-btn")
-			.css({"display": "none"})
-			.prop("hidden", false);
+		$(".js-prev-results-btn").css({"display": "none"});	
 	};
 }
 
@@ -100,7 +102,8 @@ function watchSubmit(){
 		queryTarget.val("");
 		//User's input is the query we send to our getDataFromAPI function, displayYoutubeSearchData is the callback function to be used with the input
 		getDataFromAPI(displayYoutubeSearchData);
-		updateSearchTitle(userSearch);
+		$(".js-result-title").prop("hidden", false);
+		$(".js-more-results").prop("hidden", false);
 	})
 }
 

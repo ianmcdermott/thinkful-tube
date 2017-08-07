@@ -83,6 +83,12 @@ button{
 	margin: 0 auto;
 }
 
+.visuallyhidden { 
+   position: absolute !important;
+   top: -9999px !important;
+   left: -9999px !important;
+}
+
 .js-more-results{
 	clear: both;
 	width: 100%;
