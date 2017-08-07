@@ -44,10 +44,10 @@ function renderResult(result){
 	// Render the HTML with thumbnail, link to more videos from user, and video popping up as iframe in a featherlight lightbox 
 	return `
 		<div class="search-results">
-			<a href="https://www.youtube.com/embed/${result.id.videoId}" data-featherlight="iframe" data-featherlight-iframe-allowfullscreen="true" data-featherlight-iframe-width="750" data-featherlight-iframe-height="422"><img src="${result.snippet.thumbnails.medium.url}" alt="Image for ${result.snippet.title}"/></a>
+			<a href="https://www.youtube.com/embed/${result.id.videoId}" data-featherlight="iframe" data-featherlight-iframe-allowfullscreen="true" data-featherlight-iframe-width="750" data-featherlight-iframe-height="422" role="application"><img src="${result.snippet.thumbnails.medium.url}" alt="Image for ${result.snippet.title}. Click to open lightbox."/></a>
 			<div class="image-description">
 				<h2>
-					<a class="js-result-name swipebox" href="#"></a>
+					<a href="https://www.youtube.com/embed/${result.id.videoId}" data-featherlight="iframe" data-featherlight-iframe-allowfullscreen="true" data-featherlight-iframe-width="750" data-featherlight-iframe-height="422" role="application">Click to open lightbox for ${result.snippet.title}</a>
 				</h2>
 				
 				<a class="js-more-video" href="https://www.youtube.com/channel/${result.snippet.channelId}" target="blank">More from ${result.snippet.channelTitle}</a>
@@ -74,11 +74,17 @@ function updateSearchTitle(searchVal){
 //Renders Watch More/Prev buttons to webpage
 function renderNavButtons(results, data){
 	$(".js-search-results").html(results);
-	$(".js-more-results-btn").css({"display": "inline"});
+	$(".js-more-results-btn")
+		.css({"display": "inline"})
+		.prop("hidden", false);
 	if(moreResultCount > 0){
-		$(".js-prev-results-btn").css({"display": "inline"});
+		$(".js-prev-results-btn")
+			.css({"display": "inline"})
+			.prop("hidden", false);
 	} else {
-		$(".js-prev-results-btn").css({"display": "none"});
+		$(".js-prev-results-btn")
+			.css({"display": "none"})
+			.prop("hidden", false);
 	};
 }
 
