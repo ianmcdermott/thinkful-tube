@@ -87,6 +87,8 @@ function renderNavButtons(results, data){
 //listens for submit click
 function watchSubmit(){
 	$(".js-search-form").submit(event => {
+		event.preventDefault();
+
 		const queryTarget = $(event.currentTarget).find('.js-query');
     	userSearch = queryTarget.val();
 		queryTarget.val("");
